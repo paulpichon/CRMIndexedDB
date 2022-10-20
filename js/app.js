@@ -2,6 +2,8 @@
 (function() {
     //variable que guardara informacion de la base de datos
     let DB;
+    //variable que representa donde seran mostrados los registros
+    const listadoClientes = document.querySelector('#listado-clientes');
 
     //cargar funciones
     document.addEventListener('DOMContentLoaded', () => {
@@ -13,7 +15,38 @@
             obtenerCliente();
         }
 
+        //listener a listadoClientes para borrar registros
+        listadoClientes.addEventListener('click', eliminarRegistro);
+
     });
+
+    //function eliminar registro
+    function eliminarRegistro( e ) {
+        if ( e.target.classList.contains('eliminar') ) {
+            //forma 1
+            //const idEliminar = e.target.getAttribute('data-cliente');
+            //forma 2   
+            const idEliminar = Number( e.target.dataset.cliente );
+            console.log( idEliminar );
+            const confirmar = confirm('DESEAS eliminar este cleinte?');
+            
+            if ( confirmar ) {
+                const transaction = DB.transaction(['crm'], 'readwrite');
+                const objectStore = transaction.objectStore('crm');
+
+                objectStore.delete( idEliminar );
+
+                transaction.oncomplete = function() {
+                    //elimina el html del registro en el DOM
+                    e.target.parentElement.parentElement.remove();
+                }
+                
+                transaction.onerror = function() {
+                    console.log("hubo un error");
+                }
+            }
+        }
+    }
 
     //funcion para crear base de datos INDEXED DB
     function crearDB() { 
@@ -67,8 +100,7 @@
                     //destructuring
                     const { nombre, empresa, email, telefono, id } = cursor.value;
 
-                    //variable que representa donde seran mostrados los registros
-                    const listadoClientes = document.querySelector('#listado-clientes');
+                    
                     //innerhtml
                     listadoClientes.innerHTML += ` 
                     <tr>
@@ -84,7 +116,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200 text-sm leading-5">
                             <a href="editar-cliente.html?id=${id}" class="text-teal-600 hover:text-teal-900 mr-5">Editar</a>
-                            <a href="#" data-cliente="${id}" class="text-red-600 hover:text-red-900">Eliminar</a>
+                            <a href="#" data-cliente="${id}" class="text-red-600 hover:text-red-900 eliminar">Eliminar</a>
                         </td>
                     </tr>
                                             `;
